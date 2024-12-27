@@ -1,0 +1,10 @@
+azure-functions
+azure-storage-blob
+azure-keyvault-secrets
+azure-identity
+azure-mgmt-network
+azure-mgmt-resource
+azure-mgmt-resourcegraph
+azure-mgmt-subscription
+azure-core~=1.32.0
+transitions~=0.9.2
