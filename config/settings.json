@@ -1,7 +1,6 @@
 {
-    "records_per_page": 100,
-    "blob_storage_connection_string": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;",
-    "container_name": "azure-greenfield",
-    "subscriptions_blob_name": "subscriptions.json",
-    "resources_blob_name": "resources.json"
+    "container_name_azure": "azure-greenfield",
+    "folder_raw_data": "raw_data",
+    "records_per_page": 5,
+    "blob_storage_connection_string": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
 }

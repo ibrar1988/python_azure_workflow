@@ -8,16 +8,9 @@ from workflow.azure_workflow import AzureWorkflow
 
 if __name__ == "__main__":
     # Load configuration
-    with open("config/settings.json") as f:
-        config = json.load(f)
+    # with open("config/settings.json") as f:
+    #     config = json.load(f)
 
     # Initialize workflow
-    workflow = AzureWorkflow(config)
-
-    # Trigger the workflow
-    workflow.fetch_subscriptions()
-    workflow.upload_subscriptions()
-    workflow.fetch_resources()
-    workflow.upload_resources()
-    workflow.end()
-
+    workflow = AzureWorkflow()
+    workflow.on_start()
