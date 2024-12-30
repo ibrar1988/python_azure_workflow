@@ -3,12 +3,10 @@ from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import AzureError
 from utils.logger_setup import setup_logger
 
-logger = setup_logger(__name__)
+logger = setup_logger(name="AzureBlobService")
 
-
-class BlobServiceClientHandler:
+class AzureBlobService:
     _instance = None
-
     @classmethod
     def get_instance(cls) -> BlobServiceClient:
         if cls._instance is None:

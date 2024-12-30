@@ -2,15 +2,15 @@ from azure.core.exceptions import AzureError
 from azure.storage.blob import BlobServiceClient
 import json
 
-from utils.azure_blob import BlobServiceClientHandler
+from utils.azure_blob_service import AzureBlobService
 from utils.logger_setup import setup_logger
 
-logger = setup_logger(__name__)
+logger = setup_logger(name="AzureBlobClient")
 
 class AzureBlobClient:
     def __init__(self):
         try:
-            self.blob_service_client = BlobServiceClientHandler.get_instance()
+            self.blob_service_client = AzureBlobService.get_instance()
         except Exception as e:
             logger.error(f"Error during blob service client: {e}")
 

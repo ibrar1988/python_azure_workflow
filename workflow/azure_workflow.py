@@ -1,21 +1,14 @@
-import os
-from datetime import time
-
-from azure.core.exceptions import AzureError
 from azure.functions import HttpResponse
-from azure.mgmt.resourcegraph import ResourceGraphClient
-from azure.mgmt.resourcegraph.models import QueryRequest
 from transitions import Machine, State
 
 from config.config import AzureConfig
 from utils.azure_blob_client import AzureBlobClient
 from utils.azure_subscription_client import AzureSubscriptionClient
-import json
-
 from utils.logger_setup import setup_logger
-from utils.save_response import generate_filename, get_subscription_path_container_name, get_resource_path_container_name
+from utils.save_response import generate_filename, get_subscription_path_container_name, \
+    get_resource_path_container_name
 
-logger = setup_logger(__name__)
+logger = setup_logger(name="AzureWorkflow")
 
 class AzureWorkflow:
     states = [
@@ -30,16 +23,13 @@ class AzureWorkflow:
     def __init__(self):
         self.subscriptions_data = None
         self.machine = None
-        #self.config = config
         self.config = AzureConfig().get_config()
 
         self.blob_client = AzureBlobClient()
-        #self.blob_client.initialize_main_container("azure-greenfield")
         container_name = self.config["container_name_azure"]
         root_folder_name = self.config["folder_raw_data"]
         self.subscription_path_container_name = get_subscription_path_container_name(root_folder_name=root_folder_name, container_name=container_name)
         self.resource_path_container_name = get_resource_path_container_name(root_folder_name=root_folder_name, container_name=container_name)
-        #root_folder_name:str, container_name
         self.blob_client.initialize_container(container_name)
         self.subscription_client = AzureSubscriptionClient()
         self.subscriptions = []
@@ -64,8 +54,6 @@ class AzureWorkflow:
 
     def on_start(self):
         logger.info("Workflow started.")
-        #self.blob_client = AzureBlobClient()
-        #self.blob_client.initialize_container(self.subscription_path_container_name)
         # noinspection PyUnresolvedReferences
         self.start_workflow()  # Trigger the next state event
 
@@ -102,8 +90,6 @@ class AzureWorkflow:
 
     def on_fetch_resources(self):
         logger.info("Fetching resources...")
-        #self.blob_client = AzureBlobClient()
-        #self.blob_client.initialize_container(self.resource_path_container_name)
         # Process resources for each subscription
         for subscription in self.subscriptions_data:
             subscription_id = subscription.get("subscription_id")
@@ -145,38 +131,8 @@ class AzureWorkflow:
         self.fetch_resources_done()
 
     def on_upload_resources(self):
-        logger.info("Uploading resources...")
-        # self.blob_client = AzureBlobClient(
-        #     self.config["blob_storage_connection_string"],
-        #     self.resource_path_container_name
-        # )
-        # Add your logic to finalize resource uploads here
         # noinspection PyUnresolvedReferences
         self.upload_resources_done()  # Trigger the next state event
 
     def on_end(self):
-        logger.info("Workflow completed.")
-
-
-    #-------------
-
-    # def fetch_subscriptions(self):
-    #     print("Fetching subscriptions...")
-    #     self.subscriptions = self.subscription_client.fetch_subscriptions()
-    #
-    # def upload_subscriptions(self):
-    #     print("Uploading subscriptions...")
-    #     self.blob_client.upload_json(self.config["subscriptions_blob_name"], self.subscriptions)
-    #
-    # def fetch_resources(self):
-    #     print("Fetching resources...")
-    #     for subscription in self.subscriptions:
-    #         subscription_id = subscription["id"]
-    #         self.resources.extend(self.subscription_client.fetch_resources(subscription_id))
-    #
-    # def upload_resources(self):
-    #     print("Uploading resources...")
-    #     self.blob_client.upload_json(self.config["resources_blob_name"], self.resources)
-    #
-    # def end_process(self):
-    #     print("Workflow completed successfully!")
+        logger.info("Workflow completed successfully!")

@@ -3,8 +3,7 @@ from azure.core.exceptions import HttpResponseError
 import functools
 from time import sleep
 
-logger = setup_logger("Retry")
-
+logger = setup_logger(name="retry_with_backoff")
 
 def retry_with_backoff(retries=3, backoff_in_seconds=1):
     def decorator(func):

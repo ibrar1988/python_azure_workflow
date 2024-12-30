@@ -1,16 +1,16 @@
+import time
 from typing import Any
 
+from azure.core.exceptions import AzureError
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.resource import SubscriptionClient
-from shared.retry_decorator import retry_with_backoff
-from azure.mgmt.resource import ResourceManagementClient
-from utils.logger_setup import setup_logger
-from azure.core.exceptions import AzureError, HttpResponseError
 from azure.mgmt.resourcegraph import ResourceGraphClient
 from azure.mgmt.resourcegraph.models import QueryRequest, QueryResponse
-import time
 
-logger = setup_logger(__name__)
+from shared.retry_decorator import retry_with_backoff
+from utils.logger_setup import setup_logger
+
+logger = setup_logger(name="AzureSubscriptionClient")
 
 class AzureSubscriptionClient:
     credential = None
@@ -42,7 +42,7 @@ class AzureSubscriptionClient:
             resource_graph_client = ResourceGraphClient(self.credential)
             if records_per_page is None:
                 records_per_page = 100
-            print(f"<<<< Per page : {records_per_page} with subscription id: {subscription_id}")
+            logger.info(f"<<<< Per page : {records_per_page} with subscription id: {subscription_id}")
             query = QueryRequest(
                 subscriptions=[subscription_id],
                 query="""
@@ -51,15 +51,27 @@ class AzureSubscriptionClient:
                 options={"resultFormat": "objectArray", "$top": records_per_page}  # Set records per page
             )
 
+
+            # query1 = "resourcechanges | where todatetime(properties.changeAttributes.timestamp) > ago(24h)"
+            #
+            #
+            # # Define the query request parameters
+            # query_request = QueryRequest(
+            #     subscriptions=[subscription_id],
+            #     query=query1
+            # )
+            # # Run the query
+            # response = resource_graph_client.resources(query_request)
+
+
+
             # Initial query
             result: QueryResponse = resource_graph_client.resources(query)
             if hasattr(result, 'data') and isinstance(result.data, list):
-                # page_token = result.skip_token
                 yield result.data  # Yield the first page of data
 
             # Handle pagination with skipToken
             while result.skip_token is not None:
-                # query.options["skipToken"] = result.skip_token
                 # Create a new QueryRequest with updated options
                 re_query = QueryRequest(
                     subscriptions=[subscription_id],
@@ -68,7 +80,6 @@ class AzureSubscriptionClient:
                     """,
                     options={
                         "resultFormat": "objectArray",
-                        # "top": record_per_page, # Set records per page
                         "$skipToken": result.skip_token  # Add skipToken here
                     }
                 )
@@ -77,7 +88,6 @@ class AzureSubscriptionClient:
                     try:
                         result = resource_graph_client.resources(re_query)
                         if hasattr(result, 'data') and isinstance(result.data, list):
-                            # page_token = result.skip_token
                             yield result.data  # Yield each subsequent page
                         break  # Exit retry loop on success
                     except AzureError as e:
