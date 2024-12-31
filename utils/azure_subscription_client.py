@@ -14,11 +14,13 @@ logger = setup_logger(name="AzureSubscriptionClient")
 
 class AzureSubscriptionClient:
     credential = None
+    resource_graph_client = None
+
     def __init__(self):
         self.credential = DefaultAzureCredential()
         self.subscription_client = SubscriptionClient(self.credential)
         logger.info("Initializing SubscriptionClient.")
-        self.resource_client = None
+        self.resource_graph_client = ResourceGraphClient(self.credential)
 
     @retry_with_backoff(retries=3, backoff_in_seconds=1)
     def fetch_subscriptions(self) -> list[Any]:
@@ -35,38 +37,31 @@ class AzureSubscriptionClient:
             logger.error(f"An unexpected error occurred: {str(e)}")
             raise
 
-    def get_resources_for_subscription_paginated(self, subscription_id, records_per_page, max_retries=3, retry_delay=5):
+    @retry_with_backoff(retries=3, backoff_in_seconds=1)
+    def get_resources_for_subscription_paginated(self, subscription_id, records_per_page, time_hour, max_retries=3, retry_delay=5):
         if not subscription_id:
             raise ValueError("Subscription ID is required but was not provided.")
         try:
-            resource_graph_client = ResourceGraphClient(self.credential)
-            if records_per_page is None:
-                records_per_page = 100
             logger.info(f"<<<< Per page : {records_per_page} with subscription id: {subscription_id}")
-            query = QueryRequest(
+
+            if time_hour is None:
+                # Normal query
+                query = "resources"
+            else:
+                # Change query
+                if time_hour < 1:
+                    time_hour = 1 # Override time_hour for testing purpose
+                time_hour = str(time_hour) + "h"
+                query = f"resourcechanges | where todatetime(properties.changeAttributes.timestamp) > ago({time_hour})"
+
+            query_request = QueryRequest(
                 subscriptions=[subscription_id],
-                query="""
-                resources
-                """,
+                query=query,
                 options={"resultFormat": "objectArray", "$top": records_per_page}  # Set records per page
             )
 
-
-            # query1 = "resourcechanges | where todatetime(properties.changeAttributes.timestamp) > ago(24h)"
-            #
-            #
-            # # Define the query request parameters
-            # query_request = QueryRequest(
-            #     subscriptions=[subscription_id],
-            #     query=query1
-            # )
-            # # Run the query
-            # response = resource_graph_client.resources(query_request)
-
-
-
             # Initial query
-            result: QueryResponse = resource_graph_client.resources(query)
+            result: QueryResponse = self.resource_graph_client.resources(query_request)
             if hasattr(result, 'data') and isinstance(result.data, list):
                 yield result.data  # Yield the first page of data
 
@@ -75,9 +70,7 @@ class AzureSubscriptionClient:
                 # Create a new QueryRequest with updated options
                 re_query = QueryRequest(
                     subscriptions=[subscription_id],
-                    query="""
-                    resources
-                    """,
+                    query=query,
                     options={
                         "resultFormat": "objectArray",
                         "$skipToken": result.skip_token  # Add skipToken here
@@ -86,7 +79,7 @@ class AzureSubscriptionClient:
                 retries = 0
                 while retries < max_retries:
                     try:
-                        result = resource_graph_client.resources(re_query)
+                        result = self.resource_graph_client.resources(re_query)
                         if hasattr(result, 'data') and isinstance(result.data, list):
                             yield result.data  # Yield each subsequent page
                         break  # Exit retry loop on success

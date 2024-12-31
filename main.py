@@ -1,16 +1,20 @@
-# This is a sample Python script.
+import azure.functions as func
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-import json
+from utils.logger_setup import setup_logger
 from workflow.azure_workflow import AzureWorkflow
 
-if __name__ == "__main__":
-    # Load configuration
-    # with open("config/settings.json") as f:
-    #     config = json.load(f)
+logger = setup_logger(name="main")
 
-    # Initialize workflow
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logger.info("Workflow completed successfully")
     workflow = AzureWorkflow()
-    workflow.on_start()
+    try:
+        # Start the workflow
+        workflow.on_start()
+        logger.info("Workflow completed successfully")
+        return func.HttpResponse("Workflow completed successfully.", status_code=200)
+    except Exception as e:
+        # Log the error
+        logger.error(f"An error occurred: {str(e)}")
+        # Return HTTP 500 with the error message
+        return func.HttpResponse(f"Internal Server Error: {str(e)}", status_code=500)
